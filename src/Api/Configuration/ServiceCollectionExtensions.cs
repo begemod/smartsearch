@@ -9,6 +9,7 @@ namespace Api.Configuration
         {
             return services.AddMediatR(typeof(Startup));
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(TimerBehavior<,>));
         }
     }
 }
