@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace Api
 {
@@ -8,6 +11,26 @@ namespace Api
     {
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddMvc()
+                    .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
+                    .AddJsonOptions(
+                        opt =>
+                            {
+                                opt.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+                                opt.SerializerSettings.DateTimeZoneHandling = DateTimeZoneHandling.Utc;
+
+                                var resolver = opt.SerializerSettings.ContractResolver;
+
+                                if (resolver == null)
+                                {
+                                    return;
+                                }
+
+                                if (resolver is DefaultContractResolver res)
+                                {
+                                    res.NamingStrategy = new CamelCaseNamingStrategy();
+                                }
+                            });
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
