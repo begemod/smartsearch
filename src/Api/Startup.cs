@@ -1,4 +1,5 @@
-﻿using Api.Configuration;
+﻿using Api.Common;
+using Api.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,7 +12,10 @@ namespace Api
     {
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc()
+            services.AddMvc(o =>
+                        {
+                            o.Filters.Add<HttpGlobalExceptionFilter>();
+                        })
                     .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
                     .AddJsonOptions(
                         opt =>
