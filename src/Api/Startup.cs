@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using Api.Configuration;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,6 +32,8 @@ namespace Api
                                     res.NamingStrategy = new CamelCaseNamingStrategy();
                                 }
                             });
+
+            services.AddMediatRServices();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
