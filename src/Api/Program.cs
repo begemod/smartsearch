@@ -13,7 +13,7 @@ namespace Api
 {
     public class Program
     {
-        public static async Task Main(string[] args)
+        public static async Task<int> Main(string[] args)
         {
             try
             {
@@ -24,10 +24,15 @@ namespace Api
                 Log.Information("Starting web host");
 
                 await webHost.RunAsync();
+
+                Log.Information("Web host stopped");
+
+                return 0;
             }
             catch (Exception ex)
             {
                 Log.Fatal(ex, "Host terminated unexpectedly");
+                return 1;
             }
             finally
             {
