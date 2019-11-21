@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 using Api.Common.Constants;
+using Api.Configuration;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -22,6 +23,8 @@ namespace Api
                 ConfigureLogging();
 
                 Log.Information("Starting web host");
+
+                await webHost.EnsureIndexCreated();
 
                 await webHost.RunAsync();
 
