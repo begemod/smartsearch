@@ -47,7 +47,7 @@ namespace Api
 
             services.AddMediatRServices()
                     .AddElasticsearch(Configuration)
-                    .AddSingleton<IHttpContextAccessor, HttpContextAccessor>(); ;
+                    .AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         }
 
         public void Configure(IApplicationBuilder app)
