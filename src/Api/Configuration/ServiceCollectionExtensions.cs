@@ -46,8 +46,7 @@ namespace Api.Configuration
             var pool = new SingleNodeConnectionPool(new Uri(configuration.GetAwsElasticsearchConnectionString()));
 
             var config = new ConnectionSettings(pool, httpConnection)
-                                            .ThrowExceptions()
-                                            .DefaultIndex(Common.Constants.Elasticsearch.DataIndexName);
+                                            .ThrowExceptions();
 
             var client = new ElasticClient(config);
 
