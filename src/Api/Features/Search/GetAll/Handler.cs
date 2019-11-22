@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Api.Features.ManagementCompanies.Domain;
 using MediatR;
 using Nest;
 
@@ -24,48 +23,41 @@ namespace Api.Features.Search.GetAll
 
             var markets = FetchMarketsFilter(query);
 
-            var managementCompaniesSearchResult = await SearchManagementCompaniesAsync(
-                                                      queryPhrase,
-                                                      markets,
-                                                      query.Limit,
-                                                      cancellationToken);
+            var result = await _elasticClient.SearchAsync<ConsolidatedData>(c =>
+                                                             c.Index(Indices.Index(
+                                                                 Common.Constants.Elasticsearch.IndexName.ManagementCompanies,
+                                                                 Common.Constants.Elasticsearch.IndexName.ApartmentBuildings))
+                                                                 .Query(q => q
+                                                                            .Bool(b =>
+                                                                                    b.Must(m => m.MultiMatch(mm =>
+                                                                                                    mm.Fields(f =>
+                                                                                                              f.Field(x => x.Name, 20)
+                                                                                                               .Field(x => x.FormerName, 15)
+                                                                                                               .Field(x => x.StreetAddress, 10)
+                                                                                                               .Field(x => x.City, 5)
+                                                                                                              )
+                                                                                                    .Query(queryPhrase)
+                                                                                                )
+                                                                                            )
+                                                                           .Filter(f =>
+                                                                                       f.Terms(t =>
+                                                                                                   t.Field(tf => tf.Market)
+                                                                                                    .Terms(markets)
+                                                                                       )
+                                                                                    )
+                                                                            )
+                                                   )
+                                            .Take(query.Limit)
+                          , cancellationToken);
 
-            return managementCompaniesSearchResult.Select(r => new QueryResult
+            return result.Hits.Select(h => new QueryResult
             {
-                Id = r.Id,
-                Name = r.Name,
-                Type = "mgmt",
-                State = r.State,
-                Market = r.Market
+                Id = h.Source.Id,
+                Name = h.Source.Name,
+                Type = h.Index.Equals(Common.Constants.Elasticsearch.IndexName.ManagementCompanies, StringComparison.OrdinalIgnoreCase) ? "mgmt" : "prop",
+                Market = h.Source.Market,
+                State = h.Source.State
             }).ToArray();
-        }
-
-        private async Task<IReadOnlyCollection<ManagementCompany>> SearchManagementCompaniesAsync(
-            string queryPhrase,
-            IReadOnlyCollection<string> markets,
-            int limit,
-            CancellationToken cancellationToken)
-        {
-            var result = await _elasticClient.SearchAsync<ManagementCompanies.Domain.ManagementCompany>(
-                c => c.Index(Common.Constants.Elasticsearch.IndexName.ManagementCompanies)
-                                        .Query(q => q.Bool(b =>
-                                                               b.Must(m =>
-                                                                          m.Match(mm =>
-                                                                                      mm.Field(f => f.Name)
-                                                                                          .Query(queryPhrase)
-                                                                          ))
-                                                                   .Filter(f =>
-                                                                               f.Terms(t =>
-                                                                                           t.Field(tf => tf.Market)
-                                                                                               .Terms(markets)
-                                                                               )
-                                                                   )
-                                               )
-                                        )
-                    .Take(limit)
-                , cancellationToken);
-
-            return result.Documents;
         }
 
         private List<string> FetchMarketsFilter(Query query)
