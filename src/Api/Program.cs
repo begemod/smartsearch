@@ -24,7 +24,7 @@ namespace Api
 
                 Log.Information("Starting web host");
 
-                await webHost.EnsureIndexCreated();
+                await webHost.EnsureIndexCreatedAsync();
 
                 await webHost.RunAsync();
 
