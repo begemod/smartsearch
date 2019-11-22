@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Features.Search
 {
-    [Produces("application/json")]
     [Route("api/search")]
     public class SearchController : Controller
     {

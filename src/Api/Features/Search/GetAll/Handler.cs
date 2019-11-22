@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Api.Features.ManagementCompanies.Domain;
 using MediatR;
 using Nest;
 
@@ -23,27 +24,15 @@ namespace Api.Features.Search.GetAll
 
             var markets = FetchMarketsFilter(query);
 
-            var res = await _elasticClient.SearchAsync<ManagementCompanies.Domain.ManagementCompany>(
-                          c => c.Index(Common.Constants.Elasticsearch.IndexName.ManagementCompanies)
-                                            .Query(q => q.Bool(b =>
-                                                                   b.Must(m =>
-                                                                              m.Match(mm =>
-                                                                                          mm.Field(f => f.Name)
-                                                                                            .Query(queryPhrase)
-                                                                                          ))
-                                                                    .Filter(f =>
-                                                                                f.Terms(t =>
-                                                                                            t.Field(tf => tf.Market)
-                                                                                             .Terms(markets)
-                                                                                            )
-                                                                                )
-                                                                   )
-                                                   )
-                                            .Take(query.Limit)
-                          , cancellationToken);
+            var managementCompaniesSearchResult = await SearchManagementCompaniesAsync(
+                                                      queryPhrase,
+                                                      markets,
+                                                      query.Limit,
+                                                      cancellationToken);
 
-            return res.Documents.Select(r => new QueryResult
+            return managementCompaniesSearchResult.Select(r => new QueryResult
             {
+                Id = r.Id,
                 Name = r.Name,
                 Type = "mgmt",
                 State = r.State,
@@ -51,7 +40,35 @@ namespace Api.Features.Search.GetAll
             }).ToArray();
         }
 
-        private static List<string> FetchMarketsFilter(Query query)
+        private async Task<IReadOnlyCollection<ManagementCompany>> SearchManagementCompaniesAsync(
+            string queryPhrase,
+            IReadOnlyCollection<string> markets,
+            int limit,
+            CancellationToken cancellationToken)
+        {
+            var result = await _elasticClient.SearchAsync<ManagementCompanies.Domain.ManagementCompany>(
+                c => c.Index(Common.Constants.Elasticsearch.IndexName.ManagementCompanies)
+                                        .Query(q => q.Bool(b =>
+                                                               b.Must(m =>
+                                                                          m.Match(mm =>
+                                                                                      mm.Field(f => f.Name)
+                                                                                          .Query(queryPhrase)
+                                                                          ))
+                                                                   .Filter(f =>
+                                                                               f.Terms(t =>
+                                                                                           t.Field(tf => tf.Market)
+                                                                                               .Terms(markets)
+                                                                               )
+                                                                   )
+                                               )
+                                        )
+                    .Take(limit)
+                , cancellationToken);
+
+            return result.Documents;
+        }
+
+        private List<string> FetchMarketsFilter(Query query)
         {
             var markets = new List<string>();
 
@@ -66,9 +83,9 @@ namespace Api.Features.Search.GetAll
             return markets;
         }
 
-        private static string NormalizePhrase(Query query)
+        private string NormalizePhrase(Query query)
         {
-            var queryPhrase = query.Phrase.AsSpan() // get rid of extra allocations
+            var queryPhrase = query.Phrase.AsSpan() // get rid of extra strings allocation
                                    .Trim()
                                    .Trim('\'')
                                    .Trim('\"');
