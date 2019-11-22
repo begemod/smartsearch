@@ -2,6 +2,11 @@
 {
     public static class Elasticsearch
     {
-        public static string DataIndexName = "data";
+        public static class IndexName
+        {
+            public const string ManagementCompanies = "management-companies";
+
+            public const string ApartmentBuildings = "apartment-buildings";
+        }
     }
 }
